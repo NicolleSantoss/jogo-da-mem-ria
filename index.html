@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Nossa Fusão</title>
+    <title>Jogo</title>
     <style>
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
@@ -96,7 +96,7 @@
         }
 
         /* ESTILO DO JOGO */
-        h1 { color: #a5f3fc; text-shadow: 0 0 15px rgba(165, 243, 252, 0.8); margin-top: 100px; z-index: 2; font-size: 1.6rem; }
+        h1 { color: #a5f3fc; text-shadow: 0 0 15px rgba(165, 243, 252, 0.8); margin-top: 100px; z-index: 2; font-size: 1.6rem; text-align: center; }
 
         #tabuleiro {
             display: grid;
@@ -120,12 +120,28 @@
             border: 1px solid rgba(165, 243, 252, 0.2);
             transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             transform-style: preserve-3d;
+            position: relative;
         }
 
-        .carta img { width: 100%; height: 100%; object-fit: cover; border-radius: 10px; display: none; }
-        .verso { font-size: 30px; color: #a5f3fc; }
+        .carta img { 
+            width: 100%; 
+            height: 100%; 
+            object-fit: cover; 
+            border-radius: 10px; 
+            display: block; 
+            opacity: 0; 
+            transition: opacity 0.3s;
+        }
+
+        .verso { 
+            position: absolute;
+            font-size: 30px; 
+            color: #a5f3fc; 
+            backface-visibility: hidden;
+        }
+
         .virada { background: white; transform: rotateY(180deg); }
-        .virada img { display: block; transform: rotateY(180deg); }
+        .virada img { opacity: 1; transform: rotateY(180deg); }
         .virada .verso { display: none; }
 
         /* ANIMAÇÃO DE FUSÃO */
@@ -133,11 +149,17 @@
         .gem { width: 60px; height: 60px; border-radius: 50%; position: absolute; filter: blur(5px); }
         .rubi { background: #ff4d4d; left: -100px; animation: aprox 2.5s forwards; }
         .safira { background: #4d94ff; left: 100px; animation: aprox 2.5s forwards; }
+        
         @keyframes aprox { to { left: 0; opacity: 0.8; } }
 
         .brilho-fusao { width: 10px; height: 10px; background: white; border-radius: 50%; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); opacity: 0; }
         .fusao-ativa .brilho-fusao { animation: explosao 2s 2s forwards; }
-        @keyframes explosao { 0% { width: 0; height: 0; opacity: 1; } 50% { width: 1200px; height: 1200px; opacity: 1; filter: blur(50px); } 100% { width: 3000px; height: 3000px; opacity: 0; } }
+        
+        @keyframes explosao { 
+            0% { width: 0; height: 0; opacity: 1; } 
+            50% { width: 1200px; height: 1200px; opacity: 1; filter: blur(50px); } 
+            100% { width: 3000px; height: 3000px; opacity: 0; } 
+        }
 
         #mensagem-final {
             display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
@@ -178,7 +200,7 @@
             Eu escolho ser 'nós' todos os dias."
         </p>
         <br>
-        <h2 style="color: white; font-size: 1.7rem;">Eu te AMO!<br>Quer namorar comigo?</h2>
+        <h2 style="color: white; font-size: 1.7rem;">Eu te AMO!<br>Agora você é minha namorada!</h2>
     </div>
 
     <script>
@@ -190,15 +212,23 @@
 
         btn.onclick = (e) => {
             e.stopPropagation();
-            if(musica.paused) { musica.play(); btn.innerText = '⏸️'; island.classList.add('active'); }
-            else { musica.pause(); btn.innerText = '▶️'; }
+            if(musica.paused) { 
+                musica.play().catch(e => console.log("Erro ao dar play: ", e)); 
+                btn.innerText = '⏸️'; 
+                island.classList.add('active'); 
+            }
+            else { 
+                musica.pause(); 
+                btn.innerText = '▶️'; 
+            }
         };
 
+        // LISTA DE IMAGENS - Verifique se os nomes e extensões estão idênticos na sua pasta
         const imagens = [
             'fotos/foto1.jpeg', 'fotos/foto1.jpeg',
             'fotos/foto2.jpeg', 'fotos/foto2.jpeg',
             'fotos/foto3.jpeg', 'fotos/foto3.jpeg',
-            'fotos/foto4.png', 'fotos/foto4.png',
+            'fotos/foto4.jpeg', 'fotos/foto4.jpeg', // Tente usar .jpeg aqui e converter seu arquivo
             'fotos/foto5.jpeg', 'fotos/foto5.jpeg',
             'fotos/foto6.jpeg', 'fotos/foto6.jpeg'
         ];
@@ -212,10 +242,13 @@
         }
 
         const tabuleiro = document.getElementById('tabuleiro');
+        
+        // Criando as cartas
         embaralhar(imagens).forEach(src => {
             const carta = document.createElement('div');
             carta.className = 'carta';
-            carta.innerHTML = `<img src="${src}"><div class="verso">?</div>`;
+            // Adicionei um atributo data-foto para comparar as cartas melhor
+            carta.innerHTML = `<img src="${src}" loading="lazy"><div class="verso">?</div>`;
             tabuleiro.appendChild(carta);
         });
 
@@ -225,18 +258,34 @@
         cartas.forEach(carta => {
             carta.addEventListener('click', () => {
                 if(bloqueado || carta === primeira || carta.classList.contains('virada')) return;
+                
                 carta.classList.add('virada');
-                if(!primeira) { primeira = carta; return; }
+                
+                if(!primeira) { 
+                    primeira = carta; 
+                    return; 
+                }
+
                 segunda = carta;
                 bloqueado = true;
-                if(primeira.querySelector('img').src === segunda.querySelector('img').src) {
-                    pares++; primeira = null; segunda = null; bloqueado = false;
+
+                // Comparação baseada no SRC da imagem
+                const img1 = primeira.querySelector('img').src;
+                const img2 = segunda.querySelector('img').src;
+
+                if(img1 === img2) {
+                    pares++; 
+                    primeira = null; 
+                    segunda = null; 
+                    bloqueado = false;
                     if(pares === 6) iniciarFusao();
                 } else {
                     setTimeout(() => {
                         primeira.classList.remove('virada');
                         segunda.classList.remove('virada');
-                        primeira = null; segunda = null; bloqueado = false;
+                        primeira = null; 
+                        segunda = null; 
+                        bloqueado = false;
                     }, 700);
                 }
             });
